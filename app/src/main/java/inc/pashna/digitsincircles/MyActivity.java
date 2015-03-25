@@ -50,6 +50,7 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     private TiledTextureRegion orangeRoundTexture;
     private TiledTextureRegion blueRoundTexture;
     private ITextureRegion mBackgroundTextureRegion;
+    private ITextureRegion mMenuTextureRegion;
     private Font mFont;
 
     private LevelsFactory levelsFactory;
@@ -94,8 +95,16 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
                 }
             });
             backgroundTexture.load();
-
             this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
+
+            ITexture menuTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+                @Override
+                public InputStream open() throws IOException {
+                    return getAssets().open("gfx/background.png");
+                }
+            });
+            menuTexture.load();
+            this.mMenuTextureRegion = TextureRegionFactory.extractFromTexture(menuTexture);
         } catch (IOException e) {}
     }
 
@@ -111,8 +120,10 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     @Override
     public void onPositionChanged(float curX, float curY) {
         if (curY > this.mCamera.getHeight()) {
-            stopLevel();
-            generateNewLevel();
+            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
+            this.mMainScene.attachChild(backgroundSprite);
+            //stopLevel();
+            //if (levelsFactory.isCorrectAnswer()) generateNewLevel();
         }
     }
 
@@ -126,6 +137,14 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
 
     public void generateNewLevel() {
         levelsFactory.generateLevel(0, mMainScene);
+    }
+
+    public void generateMenu(boolean isWinner) {
+        Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
+        this.mMainScene.attachChild(backgroundSprite);
+        if (isWinner) {
+
+        }
     }
 
 }

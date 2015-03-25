@@ -17,6 +17,9 @@ public class LevelsFactory {
     private Font font;
     private VertexBufferObjectManager vertexBufferObjectManager;
     OnPositionChangedListener positionChangedListener;
+    private RoundObject[] roundObjects;
+    private int[] mValue;
+
 
     public LevelsFactory(TiledTextureRegion blue, TiledTextureRegion orange, Font font, VertexBufferObjectManager vertexBufferObjectManager, OnPositionChangedListener listener) {
         this.blue = blue;
@@ -31,7 +34,8 @@ public class LevelsFactory {
             case 0:
                 int type[] = {ORANGE, ORANGE, ORANGE, BLUE, ORANGE, ORANGE, ORANGE};
                 int value[] = {1, 2, 3, 5, 8, 13, 21};
-                attachToScene(type, createRoundObjects(type, value, (int)(MyActivity.CAMERA_WIDTH/2-blue.getWidth()/2), 0), scene);
+                createRoundObjects(type, value, (int)(MyActivity.CAMERA_WIDTH/2-blue.getWidth()/2), 0);
+                attachToScene(type, scene);
 
             case 1:
             case 2:
@@ -40,15 +44,16 @@ public class LevelsFactory {
         }
     }
 
-    private RoundObject[] createRoundObjects(int type[], int value[], int startX, int startY) {
-        RoundObject[] roundObjects = new RoundObject[type.length];
+    private void createRoundObjects(int type[], int value[], int startX, int startY) {
+        mValue = value;
+        roundObjects = new RoundObject[type.length];
         roundObjects[0] = new RoundObject(value[0], startX, startY, getTexture(type[0]),font, vertexBufferObjectManager);
         for (int i=1; i < type.length; i++) {
-            roundObjects[i] = new RoundObject(value[i], startX, startY - i * (roundObjects[0].getHeight()+10), getTexture(type[i]), font, vertexBufferObjectManager);
+            if (type[i] == ORANGE) roundObjects[i] = new RoundObject(value[i], startX, startY - i * (roundObjects[0].getHeight()+10), getTexture(type[i]), font, vertexBufferObjectManager);
+            if (type[i] == BLUE) roundObjects[i] = new RoundObject(startX, startY - i * (roundObjects[0].getHeight()+10), getTexture(type[i]), font, vertexBufferObjectManager);
         }
 
         roundObjects[roundObjects.length-1].setPositionListener(positionChangedListener);
-        return roundObjects;
     }
 
     private TiledTextureRegion getTexture(int type) {
@@ -57,10 +62,17 @@ public class LevelsFactory {
         return null;
     }
 
-    private void attachToScene(int type[], RoundObject[] roundObjects, Scene scene) {
+    private void attachToScene(int type[], Scene scene) {
         for (int i=0; i<roundObjects.length; i++) {
             scene.attachChild(roundObjects[i]);
             if (type[i] == BLUE) scene.registerTouchArea(roundObjects[i]);
         }
+    }
+
+    public boolean isCorrectAnswer() {
+        for (int i=0; i<mValue.length; i++) {
+            if (roundObjects[i].getValue() != mValue[i]) return false;
+        }
+        return true;
     }
 }
