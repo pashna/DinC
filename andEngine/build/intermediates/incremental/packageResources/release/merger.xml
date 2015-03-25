@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="2" >
+
+    <dataSet config="main" >
+        <source path="D:\ANDROID_LESSONS\DigitsInCircles\DigitsInCircles\andEngine\src\main\res" />
+        <source path="D:\ANDROID_LESSONS\DigitsInCircles\DigitsInCircles\andEngine\build\generated\res\rs\release" />
+        <source path="D:\ANDROID_LESSONS\DigitsInCircles\DigitsInCircles\andEngine\build\generated\res\generated\release" />
+    </dataSet>
+    <dataSet config="release" >
+        <source path="D:\ANDROID_LESSONS\DigitsInCircles\DigitsInCircles\andEngine\src\release\res" />
+    </dataSet>
+
+</merger>
