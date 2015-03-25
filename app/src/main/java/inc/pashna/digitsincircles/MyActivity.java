@@ -6,19 +6,27 @@ import org.andengine.engine.Engine;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
+import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.TextureOptions;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.IGameInterface;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 
 import java.io.IOException;
@@ -26,184 +34,77 @@ import java.io.InputStream;
 import java.util.Stack;
 
 public class MyActivity extends SimpleBaseGameActivity {
-    /** Called when the activity is first created. */
-    private static int CAMERA_WIDTH = 800;
-    private static int CAMERA_HEIGHT = 480;
 
-    private ITextureRegion mBackgroundTextureRegion, mTowerTextureRegion, mRing1, mRing2, mRing3;
-    private Sprite mTower1, mTower2, mTower3;
+    // ===========================================================
+    // Constants
+    // ===========================================================
 
-    private Stack mStack1, mStack2, mStack3;
+    public static final int CAMERA_WIDTH = 480;
+    public static final int CAMERA_HEIGHT = 800;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    // ===========================================================
+    // Fields
+    // ===========================================================
 
-    }
+    private Camera mCamera;
+    private Scene mMainScene;
+
+    private BitmapTextureAtlas mBitmapTextureAtlas;
+    private TiledTextureRegion mPlayerTiledTextureRegion;
+    private Font mFont;
+
+    // ===========================================================
+    // Constructors
+    // ===========================================================
+
+    // ===========================================================
+    // Getter & Setter
+    // ===========================================================
+
+    // ===========================================================
+    // Methods for/from SuperClass/Interfaces
+    // ===========================================================
 
     @Override
     public EngineOptions onCreateEngineOptions() {
-        final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-        return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
-                new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+        this.mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+
+        return new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), this.mCamera);
     }
 
     @Override
     protected void onCreateResources() {
-        try {
-            // 1 - Set up bitmap textures
-            ITexture backgroundTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("gfx/background.png");
-                }
-            });
-
-            ITexture towerTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("gfx/tower.png");
-                }
-            });
-            ITexture ring1 = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("gfx/ring1.png");
-                }
-            });
-            ITexture ring2 = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("gfx/ring2.png");
-                }
-            });
-            ITexture ring3 = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("gfx/ring3.png");
-                }
-            });
-            // 2 - Load bitmap textures into VRAM
-            backgroundTexture.load();
-            towerTexture.load();
-            ring1.load();
-            ring2.load();
-            ring3.load();
-
-
-            this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(backgroundTexture);
-            this.mTowerTextureRegion = TextureRegionFactory.extractFromTexture(towerTexture);
-            this.mRing1 = TextureRegionFactory.extractFromTexture(ring1);
-            this.mRing2 = TextureRegionFactory.extractFromTexture(ring2);
-            this.mRing3 = TextureRegionFactory.extractFromTexture(ring3);
-
-        } catch (IOException e) {
-            Debug.e(e);
-        }
-
-        // 4 - Create the stacks
-        this.mStack1 = new Stack();
-        this.mStack2 = new Stack();
-        this.mStack3 = new Stack();
-
+        // Load all the textures this game needs.
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.mPlayerTiledTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "gfx/ring1.png", 0, 0, 1, 1);
+        this.mBitmapTextureAtlas.load();
     }
 
     @Override
     protected Scene onCreateScene() {
-        final Scene scene = new Scene();
-        Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-        scene.attachChild(backgroundSprite);
+        this.mEngine.registerUpdateHandler(new FPSLogger()); // logs the frame rate
 
-        // 2 - Add the towers
-        mTower1 = new Sprite(192, 63, this.mTowerTextureRegion, getVertexBufferObjectManager());
-        mTower2 = new Sprite(400, 63, this.mTowerTextureRegion, getVertexBufferObjectManager());
-        mTower3 = new Sprite(604, 63, this.mTowerTextureRegion, getVertexBufferObjectManager());
-        scene.attachChild(mTower1);
-        scene.attachChild(mTower2);
-        scene.attachChild(mTower3);
-        // 3 - Add the rings
-        Cloud ring1 = new Cloud(0, 0, 5.0f, mRing1, this.getVertexBufferObjectManager());
+        // Create Scene and set background colour to (1, 1, 1) = white
+        this.mMainScene = new Scene();
+        this.mMainScene.setBackground(new Background(50, 0, 0));
 
-        Ring ring2 = new Ring(2, 118, 212, this.mRing2, getVertexBufferObjectManager()) {
-            @Override
-            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                if (((Ring) this.getmStack().peek()).getmWeight() != this.getmWeight())
-                    return false;
-                this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2,
-                        pSceneTouchEvent.getY() - this.getHeight() / 2);
-                if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-                    checkForCollisionsWithTowers(this);
-                }
-                return true;
-            }
-        };
-        Ring ring3 = new Ring(3, 97, 255, this.mRing3, getVertexBufferObjectManager()) {
-            @Override
-            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                if (((Ring) this.getmStack().peek()).getmWeight() != this.getmWeight())
-                    return false;
-                this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2,
-                        pSceneTouchEvent.getY() - this.getHeight() / 2);
-                if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-                    checkForCollisionsWithTowers(this);
-                }
-                return true;
-            }
-        };
-        scene.attachChild(ring1);
-        scene.attachChild(ring2);
-        scene.attachChild(ring3);
+        // Centre the player on the camera.
+        final float centerX = (CAMERA_WIDTH - this.mPlayerTiledTextureRegion.getWidth()) / 2;
+        final float centerY = -50;
 
-        // 4 - Add all rings to stack one
-        this.mStack1.add(ring3);
-        this.mStack1.add(ring2);
-        this.mStack1.add(ring1);
-        // 5 - Initialize starting position for each ring
-        //ring1.setmStack(mStack1);
-        ring2.setmStack(mStack1);
-        ring3.setmStack(mStack1);
-        //ring1.setmTower(mTower1);
-        ring2.setmTower(mTower1);
-        ring3.setmTower(mTower1);
-        // 6 - Add touch handlers
-        scene.registerTouchArea(ring1);
-        scene.registerTouchArea(ring2);
-        scene.registerTouchArea(ring3);
-        scene.setTouchAreaBindingOnActionDownEnabled(true);
-        return scene;
-    }
+        final ITexture fontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
+        this.mFont = new Font(this.getFontManager(), fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 15, true, new Color(1f, 0, 0.1f));
+        this.mFont.load();
 
-    private void checkForCollisionsWithTowers(Ring ring) {
-        Stack stack = null;
-        Sprite tower = null;
-        if (ring.collidesWith(mTower1) && (mStack1.size() == 0 ||
-                ring.getmWeight() < ((Ring) mStack1.peek()).getmWeight())) {
-            stack = mStack1;
-            tower = mTower1;
-        } else if (ring.collidesWith(mTower2) && (mStack2.size() == 0 ||
-                ring.getmWeight() < ((Ring) mStack2.peek()).getmWeight())) {
-            stack = mStack2;
-            tower = mTower2;
-        } else if (ring.collidesWith(mTower3) && (mStack3.size() == 0 ||
-                ring.getmWeight() < ((Ring) mStack3.peek()).getmWeight())) {
-            stack = mStack3;
-            tower = mTower3;
-        } else {
-            stack = ring.getmStack();
-            tower = ring.getmTower();
-        }
-        ring.getmStack().remove(ring);
-        if (stack != null && tower !=null && stack.size() == 0) {
-            ring.setPosition(tower.getX() + tower.getWidth()/2 -
-                    ring.getWidth()/2, tower.getY() + tower.getHeight() -
-                    ring.getHeight());
-        } else if (stack != null && tower !=null && stack.size() > 0) {
-            ring.setPosition(tower.getX() + tower.getWidth()/2 -
-                    ring.getWidth()/2, ((Ring) stack.peek()).getY() -
-                    ring.getHeight());
-        }
-        stack.add(ring);
-        ring.setmStack(stack);
-        ring.setmTower(tower);
+        // Create the sprite and add it to the scene.
+        final Player oPlayer1 = new Player(centerX, centerY, this.mPlayerTiledTextureRegion, this.getVertexBufferObjectManager(), mFont);
+        final Player oPlayer2 = new Player(centerX, centerY+oPlayer1.getHeight()+10, this.mPlayerTiledTextureRegion, this.getVertexBufferObjectManager(), mFont);
+        final Player oPlayer3 = new Player(centerX, centerY+2*(oPlayer1.getHeight()+10), this.mPlayerTiledTextureRegion, this.getVertexBufferObjectManager(), mFont);
+
+        this.mMainScene.attachChild(oPlayer1);
+        this.mMainScene.attachChild(oPlayer2);
+        this.mMainScene.attachChild(oPlayer3);
+
+        return this.mMainScene;
     }
 }
