@@ -52,6 +52,8 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     private ITextureRegion mBackgroundTextureRegion;
     private Font mFont;
 
+    private LevelsFactory levelsFactory;
+
     // ===========================================================
     // Constructors
     // ===========================================================
@@ -100,6 +102,8 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     @Override
     protected Scene onCreateScene() {
         this.mEngine.registerUpdateHandler(new FPSLogger()); // logs the frame rate
+        stopLevel();
+        levelsFactory = new LevelsFactory(blueRoundTexture, orangeRoundTexture, mFont, getVertexBufferObjectManager(), this);
         generateNewLevel();
         return this.mMainScene;
     }
@@ -116,43 +120,12 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         this.mMainScene = null; // set your scene to null
         this.mMainScene = new Scene(); // initialize scene again, recreate
         this.mEngine.setScene(mMainScene); // set scene
+        Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
+        this.mMainScene.attachChild(backgroundSprite);
     }
 
     public void generateNewLevel() {
-        this.mMainScene = new Scene();
-        Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-        this.mMainScene.attachChild(backgroundSprite);
-
-        // Centre the player on the camera.
-        final float startX = (CAMERA_WIDTH - this.orangeRoundTexture.getWidth()) / 2;
-        final float startY = -50;
-
-        // Create the sprite and add it to the scene.
-        final RoundObject orangeRoundObject = new RoundObject(startX, startY, this.orangeRoundTexture, mFont, getVertexBufferObjectManager()) {
-            @Override
-            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-                    this.setValue(new Random().nextInt(25) + 25);
-                }
-                return true;
-            }
-        };
-
-        final RoundObject blueRoundObject1 = new RoundObject(startX, startY-(orangeRoundObject.getHeight()+10), this.blueRoundTexture, mFont, getVertexBufferObjectManager());
-        final RoundObject blueRoundObject2 = new RoundObject(startX, startY-2*(orangeRoundObject.getHeight()+10), this.blueRoundTexture, mFont, getVertexBufferObjectManager());
-        final RoundObject blueRoundObject3 = new RoundObject(startX, startY-3*(orangeRoundObject.getHeight()+10), this.blueRoundTexture, mFont, getVertexBufferObjectManager());
-        final RoundObject blueRoundObject4 = new RoundObject(startX, startY-4*(orangeRoundObject.getHeight()+10), this.blueRoundTexture, mFont, getVertexBufferObjectManager());
-        blueRoundObject4.setPositionListener(this);
-        //final Player oPlayer3 = new Player(centerX, centerY+2*(oPlayer1.getHeight()+10), this.orangeRoundTexture, this.getVertexBufferObjectManager(), mFont);
-
-        this.mMainScene.attachChild(blueRoundObject1);
-        this.mMainScene.attachChild(blueRoundObject2);
-        this.mMainScene.attachChild(blueRoundObject3);
-        this.mMainScene.attachChild(blueRoundObject4);
-
-
-        this.mMainScene.attachChild(orangeRoundObject);
-        this.mMainScene.registerTouchArea(orangeRoundObject);
+        levelsFactory.generateLevel(0, mMainScene);
     }
 
 }
