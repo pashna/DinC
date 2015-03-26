@@ -5,6 +5,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.debug.Debug;
 
 import java.util.Random;
 
@@ -15,6 +16,9 @@ public class RoundObject extends GameObject {
     private Text mButtonText;
     private int value;
 
+    /*
+    Конструктор игровых объектов. Заполняет поле value заданным значением
+     */
     public RoundObject(int value, final float pX, final float pY, final TiledTextureRegion pTiledTextureRegion, Font pFont, final VertexBufferObjectManager pVertexBufferObjectManager) {
         super(pX, pY, pTiledTextureRegion, pVertexBufferObjectManager);
         this.value = value;
@@ -25,6 +29,9 @@ public class RoundObject extends GameObject {
         this.attachChild(mButtonText);
     }
 
+    /*
+    Конструктор игровых объектов. Заполняет поле value значением -1.
+     */
     public RoundObject(final float pX, final float pY, final TiledTextureRegion pTiledTextureRegion, Font pFont, final VertexBufferObjectManager pVertexBufferObjectManager) {
         super(pX, pY, pTiledTextureRegion, pVertexBufferObjectManager);
         this.value = -1;
@@ -40,6 +47,9 @@ public class RoundObject extends GameObject {
         this.mPhysicsHandler.setVelocityY(150);
     }
 
+    /*
+    Устанавливает значение value на экран
+     */
     public void setValue(int value) {
         this.mButtonText.setText(value + "");
         this.value = value;
@@ -47,18 +57,23 @@ public class RoundObject extends GameObject {
     }
 
     public void incrementValue() {
-        setValue(++this.value);
+        this.value = this.value + 1;
+        setValue(this.value);
     }
 
+    /*
+    При касании делаем инкремент значения value
+     */
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
             this.incrementValue();
+            Debug.d("Value = " + value);
         }
         return true;
     }
 
     public int getValue() {
-        return value;
+        return this.value;
     }
 }

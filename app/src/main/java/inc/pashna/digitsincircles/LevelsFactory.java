@@ -4,6 +4,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.debug.Debug;
 
 /**
  * Created by Admin on 25.03.2015.
@@ -34,9 +35,8 @@ public class LevelsFactory {
             case 0:
                 int type[] = {ORANGE, ORANGE, ORANGE, BLUE, ORANGE, ORANGE, ORANGE};
                 int value[] = {1, 2, 3, 5, 8, 13, 21};
-                createRoundObjects(type, value, (int)(MyActivity.CAMERA_WIDTH/2-blue.getWidth()/2), 0);
+                createRoundObjects(type, value, (int)(MyActivity.CAMERA_WIDTH/2-blue.getWidth()/2), (int)(-blue.getHeight()*1.5));
                 attachToScene(type, scene);
-
             case 1:
             case 2:
             case 3:
@@ -44,6 +44,9 @@ public class LevelsFactory {
         }
     }
 
+    /*
+    Создает игровые объекты
+     */
     private void createRoundObjects(int type[], int value[], int startX, int startY) {
         mValue = value;
         roundObjects = new RoundObject[type.length];
@@ -52,16 +55,22 @@ public class LevelsFactory {
             if (type[i] == ORANGE) roundObjects[i] = new RoundObject(value[i], startX, startY - i * (roundObjects[0].getHeight()+10), getTexture(type[i]), font, vertexBufferObjectManager);
             if (type[i] == BLUE) roundObjects[i] = new RoundObject(startX, startY - i * (roundObjects[0].getHeight()+10), getTexture(type[i]), font, vertexBufferObjectManager);
         }
-
+        // Последнему присваиваем лисенер-activity, чтобы следить, когда закончился уровень
         roundObjects[roundObjects.length-1].setPositionListener(positionChangedListener);
     }
 
+    /*
+    Возвращает текстуру по типу
+     */
     private TiledTextureRegion getTexture(int type) {
         if (type == BLUE) return blue;
         if (type == ORANGE) return orange;
         return null;
     }
 
+    /*
+    Прикрепляет все объекты к сцене
+    */
     private void attachToScene(int type[], Scene scene) {
         for (int i=0; i<roundObjects.length; i++) {
             scene.attachChild(roundObjects[i]);
@@ -69,8 +78,12 @@ public class LevelsFactory {
         }
     }
 
+    /*
+    Анализирует результат игры
+     */
     public boolean isCorrectAnswer() {
         for (int i=0; i<mValue.length; i++) {
+            Debug.d(roundObjects[i].getValue() + "!=" + mValue[i]);
             if (roundObjects[i].getValue() != mValue[i]) return false;
         }
         return true;

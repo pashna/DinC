@@ -1,11 +1,18 @@
 package inc.pashna.digitsincircles;
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.timer.ITimerCallback;
+import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.modifier.FadeInModifier;
+import org.andengine.entity.modifier.FadeOutModifier;
+import org.andengine.entity.modifier.LoopEntityModifier;
+import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
@@ -20,14 +27,13 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.color.Color;
-import org.andengine.util.debug.Debug;
 
 import android.graphics.Typeface;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
+import java.util.Timer;
 
 public class MyActivity extends SimpleBaseGameActivity implements OnPositionChangedListener {
 
@@ -38,34 +44,29 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     public static final int CAMERA_WIDTH = 480;
     public static final int CAMERA_HEIGHT = 800;
 
-    // ===========================================================
-    // Fields
-    // ===========================================================
-
     private Camera mCamera;
     private Scene mMainScene;
 
-    private BitmapTextureAtlas mBitmapTextureAtlas1;
-    private BitmapTextureAtlas mBitmapTextureAtlas2;
+    private BitmapTextureAtlas mBitmapTextureAtlasBlue;
+    private BitmapTextureAtlas mBitmapTextureAtlasOrange;
+
+    private BitmapTextureAtlas mBitmapTextureAtlasMenuRound1;
+    private BitmapTextureAtlas mBitmapTextureAtlasMenuRound2;
+    private BitmapTextureAtlas mBitmapTextureAtlasMenuRound3;
+
     private TiledTextureRegion orangeRoundTexture;
     private TiledTextureRegion blueRoundTexture;
+
+    private TiledTextureRegion menuRoundTexture1;
+    private TiledTextureRegion menuRoundTexture2;
+    private TiledTextureRegion menuRoundTexture3;
+
+
     private ITextureRegion mBackgroundTextureRegion;
     private ITextureRegion mMenuTextureRegion;
     private Font mFont;
 
     private LevelsFactory levelsFactory;
-
-    // ===========================================================
-    // Constructors
-    // ===========================================================
-
-    // ===========================================================
-    // Getter & Setter
-    // ===========================================================
-
-    // ===========================================================
-    // Methods for/from SuperClass/Interfaces
-    // ===========================================================
 
     @Override
     public EngineOptions onCreateEngineOptions() {
@@ -76,15 +77,29 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     @Override
     protected void onCreateResources() {
         // Load all the textures this game needs.
-        this.mBitmapTextureAtlas1 = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
-        this.mBitmapTextureAtlas2 = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
-        this.blueRoundTexture = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas1, this, "gfx/blue_opacity.png", 0, 0, 1, 1);
-        this.orangeRoundTexture = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas2, this, "gfx/orange_opacity.png", 0, 0, 1, 1);
-        this.mBitmapTextureAtlas1.load();
-        this.mBitmapTextureAtlas2.load();
+        this.mBitmapTextureAtlasBlue = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.mBitmapTextureAtlasOrange = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.blueRoundTexture = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlasBlue, this, "gfx/blue_opacity.png", 0, 0, 1, 1);
+        this.orangeRoundTexture = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlasOrange, this, "gfx/orange_opacity.png", 0, 0, 1, 1);
+
+        this.mBitmapTextureAtlasBlue.load();
+        this.mBitmapTextureAtlasOrange.load();
+
+        // ======= MENU
+        this.mBitmapTextureAtlasMenuRound1 = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.mBitmapTextureAtlasMenuRound2 = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.mBitmapTextureAtlasMenuRound3 = new BitmapTextureAtlas(this.getTextureManager(), 200, 200);
+        this.menuRoundTexture1 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlasMenuRound1, this, "gfx/blue_opacity.png", 0, 0, 1, 1);
+        this.menuRoundTexture2 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlasMenuRound2, this, "gfx/orange.png", 0, 0, 1, 1);
+        this.menuRoundTexture3 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlasMenuRound3, this, "gfx/orange_opacity.png", 0, 0, 1, 1);
+
+        this.mBitmapTextureAtlasMenuRound1.load();
+        this.mBitmapTextureAtlasMenuRound2.load();
+        this.mBitmapTextureAtlasMenuRound3.load();
+        //
 
         final ITexture fontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-        this.mFont = new Font(this.getFontManager(), fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(254, 200, 250));
+        this.mFont = new Font(this.getFontManager(), fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(140, 140, 140));
         this.mFont.load();
 
         try {
@@ -111,22 +126,28 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     @Override
     protected Scene onCreateScene() {
         this.mEngine.registerUpdateHandler(new FPSLogger()); // logs the frame rate
-        stopLevel();
         levelsFactory = new LevelsFactory(blueRoundTexture, orangeRoundTexture, mFont, getVertexBufferObjectManager(), this);
+        stopLevel();
         generateNewLevel();
         return this.mMainScene;
     }
 
     @Override
     public void onPositionChanged(float curX, float curY) {
+        // Когда последний шарик покинет пределы экрана, пройдем по true
         if (curY > this.mCamera.getHeight()) {
-            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
-            this.mMainScene.attachChild(backgroundSprite);
-            //stopLevel();
-            //if (levelsFactory.isCorrectAnswer()) generateNewLevel();
+            stopLevel();
+            if (!levelsFactory.isCorrectAnswer()) { // Правильно ли ответили
+                generateMenu(levelsFactory.isCorrectAnswer());
+            } else {
+                generateNewLevel();
+            }
         }
     }
 
+    /*
+    Обнуляет текущую сцену, создает бэк для новой
+     */
     public void stopLevel() {
         this.mMainScene = null; // set your scene to null
         this.mMainScene = new Scene(); // initialize scene again, recreate
@@ -135,15 +156,83 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         this.mMainScene.attachChild(backgroundSprite);
     }
 
+    /*
+    Генерирует новый уровень. По идее, должен быть параметр текущего уровня.
+     */
     public void generateNewLevel() {
         levelsFactory.generateLevel(0, mMainScene);
     }
 
-    public void generateMenu(boolean isWinner) {
-        Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
-        this.mMainScene.attachChild(backgroundSprite);
-        if (isWinner) {
+    /*
+    Создает меню в конце игры
+     */
+    public void generateMenu(boolean result) {
+        if (result) {
+            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
+            this.mMainScene.attachChild(backgroundSprite);
 
+            Text menuText = new Text(0, 0, this.mFont, " " +"Awesome" + " ", getVertexBufferObjectManager());
+            menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
+
+            this.mMainScene.attachChild(menuText);
+        } else {
+//            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
+//            this.mMainScene.attachChild(backgroundSprite);
+
+            final MenuRoundObject[] menuRoundObjects = new MenuRoundObject[35]; // Создает кружки
+
+            // Заполняем кружки
+            for (int i=0; i<menuRoundObjects.length; i++) {
+                int x = new Random().nextInt()%(CAMERA_WIDTH/2) + CAMERA_WIDTH/2;
+                int y =  new Random().nextInt()%(CAMERA_HEIGHT/2) + CAMERA_HEIGHT/2;
+                switch (i%3) {
+                    case 0:
+                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture1, getVertexBufferObjectManager());
+                        break;
+                    case 1:
+                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture2, getVertexBufferObjectManager());
+                        break;
+                    case 2:
+                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture3, getVertexBufferObjectManager());
+                        break;
+                }
+                this.mMainScene.attachChild(menuRoundObjects[i]);
+            }
+
+            // Моргание текста
+            LoopEntityModifier loopEntityModifier = new LoopEntityModifier((new SequenceEntityModifier(new FadeOutModifier(0.5f), new FadeInModifier(0.5f))));
+            final MyActivity activity = this;
+            Text menuText = new Text(0, 0, this.mFont, "      " +"Try Again" + "       ", getVertexBufferObjectManager()) {
+                //Обработка касания текста
+                @Override
+                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                    if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+                        // Заполняем скорости шариков меню
+                        for (int i=0; i<menuRoundObjects.length; i++) {
+                            int Vx = new Random().nextInt()%500 + 500;
+                            int Vy = new Random().nextInt()%500 + 500;
+                            menuRoundObjects[i].setVelocity(Vx,Vy);
+                        }
+                        // Ставим таймер. Через 1.5 секунды нарисовать новый уровень
+                        activity.mMainScene.registerUpdateHandler(new TimerHandler(1.5f, true, new ITimerCallback() {
+                            @Override
+                            public void onTimePassed(final TimerHandler pTimerHandler) {
+                                activity.stopLevel();
+                                activity.generateNewLevel();
+                            }
+                        }));
+
+                    }
+                    return true;
+                }
+
+            };
+
+            menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
+            menuText.registerEntityModifier(loopEntityModifier);
+
+            this.mMainScene.attachChild(menuText);
+            this.mMainScene.registerTouchArea(menuText);
         }
     }
 
