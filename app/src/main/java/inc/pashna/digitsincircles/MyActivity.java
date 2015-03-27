@@ -6,8 +6,10 @@ import org.andengine.engine.options.EngineOptions;
 
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.IEntity;
 import org.andengine.entity.modifier.FadeInModifier;
 import org.andengine.entity.modifier.FadeOutModifier;
+import org.andengine.entity.modifier.IEntityModifier;
 import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.scene.Scene;
@@ -27,13 +29,13 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.color.Color;
+import org.andengine.util.modifier.IModifier;
 
 import android.graphics.Typeface;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
-import java.util.Timer;
 
 public class MyActivity extends SimpleBaseGameActivity implements OnPositionChangedListener {
 
@@ -65,6 +67,11 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     private ITextureRegion mBackgroundTextureRegion;
     private ITextureRegion mMenuTextureRegion;
     private Font mFont;
+
+    ITexture fontTextureForAwesome;
+    private Font mFontAwesome;
+
+    private int mNumberOfLevel = 0;
 
     private LevelsFactory levelsFactory;
 
@@ -98,8 +105,12 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         this.mBitmapTextureAtlasMenuRound3.load();
         //
 
+        fontTextureForAwesome = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
+        this.mFontAwesome = new Font(this.getFontManager(), fontTextureForAwesome, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(100, 0, 100));
+        this.mFontAwesome.load();
+
         final ITexture fontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-        this.mFont = new Font(this.getFontManager(), fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(140, 140, 140));
+        this.mFont = new Font(this.getFontManager(), fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(100, 100, 100));
         this.mFont.load();
 
         try {
@@ -128,20 +139,25 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         this.mEngine.registerUpdateHandler(new FPSLogger()); // logs the frame rate
         levelsFactory = new LevelsFactory(blueRoundTexture, orangeRoundTexture, mFont, getVertexBufferObjectManager(), this);
         stopLevel();
-        generateNewLevel();
+        generateCurentLevel();
         return this.mMainScene;
     }
 
     @Override
     public void onPositionChanged(float curX, float curY) {
         // Когда последний шарик покинет пределы экрана, пройдем по true
+        if (mNumberOfLevel == 0) {
+            if (curY > 0) {
+                
+            }
+        }
         if (curY > this.mCamera.getHeight()) {
             stopLevel();
-            if (!levelsFactory.isCorrectAnswer()) { // Правильно ли ответили
+            //if (!levelsFactory.isCorrectAnswer()) { // Правильно ли ответили
                 generateMenu(levelsFactory.isCorrectAnswer());
-            } else {
-                generateNewLevel();
-            }
+            //} else {
+  //              generateNewLevel();
+//            }
         }
     }
 
@@ -160,7 +176,12 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     Генерирует новый уровень. По идее, должен быть параметр текущего уровня.
      */
     public void generateNewLevel() {
-        levelsFactory.generateLevel(0, mMainScene);
+        mNumberOfLevel++;
+        levelsFactory.generateLevel(mNumberOfLevel, mMainScene);
+    }
+
+    public void generateCurentLevel() {
+        levelsFactory.generateLevel(mNumberOfLevel, mMainScene);
     }
 
     /*
@@ -168,72 +189,102 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
      */
     public void generateMenu(boolean result) {
         if (result) {
-            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
-            this.mMainScene.attachChild(backgroundSprite);
-
-            Text menuText = new Text(0, 0, this.mFont, " " +"Awesome" + " ", getVertexBufferObjectManager());
-            menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
-
-            this.mMainScene.attachChild(menuText);
+            generateWinScreen();
         } else {
 //            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
 //            this.mMainScene.attachChild(backgroundSprite);
+            generateLoseMenu();
 
-            final MenuRoundObject[] menuRoundObjects = new MenuRoundObject[35]; // Создает кружки
 
-            // Заполняем кружки
-            for (int i=0; i<menuRoundObjects.length; i++) {
-                int x = new Random().nextInt()%(CAMERA_WIDTH/2) + CAMERA_WIDTH/2;
-                int y =  new Random().nextInt()%(CAMERA_HEIGHT/2) + CAMERA_HEIGHT/2;
-                switch (i%3) {
-                    case 0:
-                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture1, getVertexBufferObjectManager());
-                        break;
-                    case 1:
-                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture2, getVertexBufferObjectManager());
-                        break;
-                    case 2:
-                        menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture3, getVertexBufferObjectManager());
-                        break;
-                }
-                this.mMainScene.attachChild(menuRoundObjects[i]);
-            }
-
-            // Моргание текста
-            LoopEntityModifier loopEntityModifier = new LoopEntityModifier((new SequenceEntityModifier(new FadeOutModifier(0.5f), new FadeInModifier(0.5f))));
-            final MyActivity activity = this;
-            Text menuText = new Text(0, 0, this.mFont, "      " +"Try Again" + "       ", getVertexBufferObjectManager()) {
-                //Обработка касания текста
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
-                        // Заполняем скорости шариков меню
-                        for (int i=0; i<menuRoundObjects.length; i++) {
-                            int Vx = new Random().nextInt()%500 + 500;
-                            int Vy = new Random().nextInt()%500 + 500;
-                            menuRoundObjects[i].setVelocity(Vx,Vy);
-                        }
-                        // Ставим таймер. Через 1.5 секунды нарисовать новый уровень
-                        activity.mMainScene.registerUpdateHandler(new TimerHandler(1.5f, true, new ITimerCallback() {
-                            @Override
-                            public void onTimePassed(final TimerHandler pTimerHandler) {
-                                activity.stopLevel();
-                                activity.generateNewLevel();
-                            }
-                        }));
-
-                    }
-                    return true;
-                }
-
-            };
-
-            menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
-            menuText.registerEntityModifier(loopEntityModifier);
-
-            this.mMainScene.attachChild(menuText);
-            this.mMainScene.registerTouchArea(menuText);
         }
     }
+
+    private void generateLoseMenu() {
+        final MenuRoundObject[] menuRoundObjects = new MenuRoundObject[35]; // Создает кружки
+
+        // Заполняем кружки
+        for (int i=0; i<menuRoundObjects.length; i++) {
+            int x = new Random().nextInt()%(CAMERA_WIDTH/2) + CAMERA_WIDTH/2;
+            int y =  new Random().nextInt()%(CAMERA_HEIGHT/2) + CAMERA_HEIGHT/2;
+            switch (i%3) {
+                case 0:
+                    menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture1, getVertexBufferObjectManager());
+                    break;
+                case 1:
+                    menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture2, getVertexBufferObjectManager());
+                    break;
+                case 2:
+                    menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture3, getVertexBufferObjectManager());
+                    break;
+            }
+            this.mMainScene.attachChild(menuRoundObjects[i]);
+        }
+
+        // Моргание текста
+        LoopEntityModifier loopEntityModifier = new LoopEntityModifier((new SequenceEntityModifier(new FadeOutModifier(0.5f), new FadeInModifier(0.5f))));
+        final MyActivity activity = this;
+        Text menuText = new Text(0, 0, this.mFont, "      " +"Try Again" + "       ", getVertexBufferObjectManager()) {
+            //Обработка касания текста
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+                    // Заполняем скорости шариков меню
+                    for (int i=0; i<menuRoundObjects.length; i++) {
+                        int Vx = new Random().nextInt()%500 + 500;
+                        int Vy = new Random().nextInt()%500 + 500;
+                        menuRoundObjects[i].setVelocity(Vx,Vy);
+                    }
+                    // Ставим таймер. Через 1.5 секунды нарисовать новый уровень
+                    activity.mMainScene.registerUpdateHandler(new TimerHandler(1.5f, true, new ITimerCallback() {
+                        @Override
+                        public void onTimePassed(final TimerHandler pTimerHandler) {
+                            activity.stopLevel();
+                            activity.generateCurentLevel();
+                        }
+                    }));
+
+                }
+                return true;
+            }
+
+        };
+
+        menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
+        menuText.registerEntityModifier(loopEntityModifier);
+
+        this.mMainScene.attachChild(menuText);
+        this.mMainScene.registerTouchArea(menuText);
+    }
+
+    private void generateWinScreen() {
+        Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
+        this.mMainScene.attachChild(backgroundSprite);
+
+        //Font font = new Font(this.getFontManager(), , Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(100, 0, 100));
+        final Text menuText = new Text(0, 0, mFontAwesome, " " +"Awesome" + " ", getVertexBufferObjectManager());
+        menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
+        menuText.setAlpha(0);
+
+        FadeInModifier fadeIn = new FadeInModifier(1,new IEntityModifier.IEntityModifierListener() {
+            public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
+            @Override
+            public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
+                FadeOutModifier fadeOut = new FadeOutModifier(1);
+                menuText.registerEntityModifier(fadeOut);
+            }
+        });
+        menuText.registerEntityModifier(fadeIn);
+
+        mMainScene.registerUpdateHandler(new TimerHandler(2.5f, true, new ITimerCallback() {
+            @Override
+            public void onTimePassed(final TimerHandler pTimerHandler) {
+                stopLevel();
+                generateNewLevel();
+            }
+        }));
+
+        this.mMainScene.attachChild(menuText);
+    }
+
 
 }

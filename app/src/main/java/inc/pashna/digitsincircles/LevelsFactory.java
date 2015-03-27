@@ -31,14 +31,30 @@ public class LevelsFactory {
     }
 
     public void generateLevel(int number, Scene scene) {
+
         switch (number) {
-            case 0:
-                int type[] = {ORANGE, ORANGE, ORANGE, BLUE, ORANGE, ORANGE, ORANGE};
-                int value[] = {1, 2, 3, 5, 8, 13, 21};
-                createRoundObjects(type, value, (int)(MyActivity.CAMERA_WIDTH/2-blue.getWidth()/2), (int)(-blue.getHeight()*1.5));
+            case 0: {
+                int type[] = {ORANGE, ORANGE, BLUE, ORANGE, ORANGE};
+                int value[] = {1, 2, 3, 2, 1};
+                createRoundObjects(type, value, (int) (MyActivity.CAMERA_WIDTH / 2 - blue.getWidth() / 2), (int) (-blue.getHeight() * 1.5));
                 attachToScene(type, scene);
-            case 1:
-            case 2:
+                break;
+            }
+            case 1: {
+                int type[] = {ORANGE, ORANGE, ORANGE, BLUE, ORANGE};
+                int value[] = {2, 4, 6, 8, 10};
+                createRoundObjects(type, value, (int) (MyActivity.CAMERA_WIDTH / 2 - blue.getWidth() / 2), (int) (-blue.getHeight() * 1.5));
+                attachToScene(type, scene);
+                break;
+            }
+            case 2: {
+                int type[] = {ORANGE, ORANGE, ORANGE, ORANGE, BLUE, ORANGE};
+                int value[] = {2, 3, 5, 7, 11, 13};
+                createRoundObjects(type, value, (int) (MyActivity.CAMERA_WIDTH / 2 - blue.getWidth() / 2), (int) (-blue.getHeight() * 1.5));
+                attachToScene(type, scene);
+                break;
+            }
+
             case 3:
             case 4:
         }

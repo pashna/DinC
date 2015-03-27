@@ -1,5 +1,9 @@
 package inc.pashna.digitsincircles;
 
+import org.andengine.entity.modifier.FadeInModifier;
+import org.andengine.entity.modifier.FadeOutModifier;
+import org.andengine.entity.modifier.LoopEntityModifier;
+import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.text.Text;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
@@ -15,6 +19,7 @@ import java.util.Random;
 public class RoundObject extends GameObject {
     private Text mButtonText;
     private int value;
+    LoopEntityModifier loopEntityModifier;
 
     /*
     Конструктор игровых объектов. Заполняет поле value заданным значением
@@ -39,6 +44,8 @@ public class RoundObject extends GameObject {
         mButtonText = new Text(0, 0, pFont, " ? ", pVertexBufferObjectManager);
         //mButtonText.setText(value + "");
         mButtonText.setPosition(this.getWidth() / 2 - mButtonText.getWidth() / 2, this.getHeight() / 2 - mButtonText.getHeight() / 2);
+        loopEntityModifier = new LoopEntityModifier((new SequenceEntityModifier(new FadeOutModifier(0.5f), new FadeInModifier(0.5f))));
+        mButtonText.registerEntityModifier(loopEntityModifier);
         this.attachChild(mButtonText);
     }
 
@@ -68,6 +75,8 @@ public class RoundObject extends GameObject {
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
         if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
             this.incrementValue();
+            mButtonText.unregisterEntityModifier(loopEntityModifier);
+            mButtonText.setAlpha(1);
             Debug.d("Value = " + value);
         }
         return true;
