@@ -21,6 +21,9 @@ public class RoundObject extends GameObject {
     private int value;
     LoopEntityModifier loopEntityModifier;
 
+    private float velocityX = 0;
+    private float velocityY = 150;
+
     /*
     Конструктор игровых объектов. Заполняет поле value заданным значением
      */
@@ -47,11 +50,13 @@ public class RoundObject extends GameObject {
         loopEntityModifier = new LoopEntityModifier((new SequenceEntityModifier(new FadeOutModifier(0.5f), new FadeInModifier(0.5f))));
         mButtonText.registerEntityModifier(loopEntityModifier);
         this.attachChild(mButtonText);
+
     }
 
     @Override
     public void move() {
-        this.mPhysicsHandler.setVelocityY(150);
+        this.mPhysicsHandler.setVelocityY(velocityY);
+        this.mPhysicsHandler.setVelocityX(velocityX);
     }
 
     /*
@@ -64,7 +69,7 @@ public class RoundObject extends GameObject {
     }
 
     public void incrementValue() {
-        this.value = this.value + 1;
+        this.value++;
         setValue(this.value);
     }
 
@@ -84,5 +89,18 @@ public class RoundObject extends GameObject {
 
     public int getValue() {
         return this.value;
+    }
+
+    public float getVelocityX() {
+        return this.velocityX;
+    }
+
+    public float getVelocityY() {
+        return this.velocityY;
+    }
+
+    public void setVelocity(float vX, float vY) {
+        velocityX = vX;
+        velocityY = vY;
     }
 }

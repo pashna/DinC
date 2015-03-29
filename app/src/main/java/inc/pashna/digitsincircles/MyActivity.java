@@ -6,6 +6,7 @@ import org.andengine.engine.options.EngineOptions;
 
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.Entity;
 import org.andengine.entity.IEntity;
 import org.andengine.entity.modifier.FadeInModifier;
 import org.andengine.entity.modifier.FadeOutModifier;
@@ -31,7 +32,9 @@ import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.color.Color;
 import org.andengine.util.modifier.IModifier;
 
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.os.Bundle;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +50,7 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     public static final int CAMERA_HEIGHT = 800;
 
     private Camera mCamera;
-    private Scene mMainScene;
+    public Scene mainScene;
 
     private BitmapTextureAtlas mBitmapTextureAtlasBlue;
     private BitmapTextureAtlas mBitmapTextureAtlasOrange;
@@ -71,9 +74,18 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     ITexture fontTextureForAwesome;
     private Font mFontAwesome;
 
-    private int mNumberOfLevel = 0;
-
+    private int mNumberOfLevel = 1;
+    private final String NEW_PLAYER = "NEW_PLAYER";
     private LevelsFactory levelsFactory;
+
+    @Override
+    public void onCreate(Bundle savedInstance) {
+        super.onCreate(savedInstance);
+        SharedPreferences sPref = getPreferences(MODE_PRIVATE);
+        if (sPref.getBoolean(NEW_PLAYER, true)) {
+            mNumberOfLevel = 0;
+        }
+    }
 
     @Override
     public EngineOptions onCreateEngineOptions() {
@@ -139,25 +151,16 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         this.mEngine.registerUpdateHandler(new FPSLogger()); // logs the frame rate
         levelsFactory = new LevelsFactory(blueRoundTexture, orangeRoundTexture, mFont, getVertexBufferObjectManager(), this);
         stopLevel();
-        generateCurentLevel();
-        return this.mMainScene;
+        generateCurrentLevel();
+        return this.mainScene;
     }
 
     @Override
     public void onPositionChanged(float curX, float curY) {
         // Когда последний шарик покинет пределы экрана, пройдем по true
-        if (mNumberOfLevel == 0) {
-            if (curY > 0) {
-                
-            }
-        }
         if (curY > this.mCamera.getHeight()) {
             stopLevel();
-            //if (!levelsFactory.isCorrectAnswer()) { // Правильно ли ответили
-                generateMenu(levelsFactory.isCorrectAnswer());
-            //} else {
-  //              generateNewLevel();
-//            }
+            generateMenu(levelsFactory.isCorrectAnswer());
         }
     }
 
@@ -165,11 +168,11 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     Обнуляет текущую сцену, создает бэк для новой
      */
     public void stopLevel() {
-        this.mMainScene = null; // set your scene to null
-        this.mMainScene = new Scene(); // initialize scene again, recreate
-        this.mEngine.setScene(mMainScene); // set scene
+        this.mainScene = null; // set your scene to null
+        this.mainScene = new Scene(); // initialize scene again, recreate
+        this.mEngine.setScene(mainScene); // set scene
         Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-        this.mMainScene.attachChild(backgroundSprite);
+        this.mainScene.attachChild(backgroundSprite);
     }
 
     /*
@@ -177,11 +180,11 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
      */
     public void generateNewLevel() {
         mNumberOfLevel++;
-        levelsFactory.generateLevel(mNumberOfLevel, mMainScene);
+        levelsFactory.generateLevel(mNumberOfLevel, mainScene);
     }
 
-    public void generateCurentLevel() {
-        levelsFactory.generateLevel(mNumberOfLevel, mMainScene);
+    public void generateCurrentLevel() {
+        levelsFactory.generateLevel(mNumberOfLevel, mainScene);
     }
 
     /*
@@ -192,7 +195,7 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
             generateWinScreen();
         } else {
 //            Sprite backgroundSprite = new Sprite(0, 0, this.mMenuTextureRegion, getVertexBufferObjectManager());
-//            this.mMainScene.attachChild(backgroundSprite);
+//            this.mainScene.attachChild(backgroundSprite);
             generateLoseMenu();
 
 
@@ -217,7 +220,7 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
                     menuRoundObjects[i] = new MenuRoundObject(x, y, menuRoundTexture3, getVertexBufferObjectManager());
                     break;
             }
-            this.mMainScene.attachChild(menuRoundObjects[i]);
+            this.mainScene.attachChild(menuRoundObjects[i]);
         }
 
         // Моргание текста
@@ -235,11 +238,11 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
                         menuRoundObjects[i].setVelocity(Vx,Vy);
                     }
                     // Ставим таймер. Через 1.5 секунды нарисовать новый уровень
-                    activity.mMainScene.registerUpdateHandler(new TimerHandler(1.5f, true, new ITimerCallback() {
+                    activity.mainScene.registerUpdateHandler(new TimerHandler(1.5f, true, new ITimerCallback() {
                         @Override
                         public void onTimePassed(final TimerHandler pTimerHandler) {
                             activity.stopLevel();
-                            activity.generateCurentLevel();
+                            activity.generateCurrentLevel();
                         }
                     }));
 
@@ -252,30 +255,20 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
         menuText.registerEntityModifier(loopEntityModifier);
 
-        this.mMainScene.attachChild(menuText);
-        this.mMainScene.registerTouchArea(menuText);
+        this.mainScene.attachChild(menuText);
+        this.mainScene.registerTouchArea(menuText);
     }
 
     private void generateWinScreen() {
         Sprite backgroundSprite = new Sprite(0, 0, this.mBackgroundTextureRegion, getVertexBufferObjectManager());
-        this.mMainScene.attachChild(backgroundSprite);
+        this.mainScene.attachChild(backgroundSprite);
 
         //Font font = new Font(this.getFontManager(), , Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 45, true, new Color(100, 0, 100));
         final Text menuText = new Text(0, 0, mFontAwesome, " " +"Awesome" + " ", getVertexBufferObjectManager());
         menuText.setPosition(CAMERA_WIDTH/2-menuText.getWidth()/2, CAMERA_HEIGHT/2-menuText.getHeight()/2);
-        menuText.setAlpha(0);
+        setAppearence(menuText, 1, 1);
 
-        FadeInModifier fadeIn = new FadeInModifier(1,new IEntityModifier.IEntityModifierListener() {
-            public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
-            @Override
-            public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
-                FadeOutModifier fadeOut = new FadeOutModifier(1);
-                menuText.registerEntityModifier(fadeOut);
-            }
-        });
-        menuText.registerEntityModifier(fadeIn);
-
-        mMainScene.registerUpdateHandler(new TimerHandler(2.5f, true, new ITimerCallback() {
+        mainScene.registerUpdateHandler(new TimerHandler(2.5f, true, new ITimerCallback() {
             @Override
             public void onTimePassed(final TimerHandler pTimerHandler) {
                 stopLevel();
@@ -283,8 +276,41 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
             }
         }));
 
-        this.mMainScene.attachChild(menuText);
+        this.mainScene.attachChild(menuText);
     }
 
+    public Text createText(String text) {
+        final Text menuText = new Text(0, 0, mFontAwesome, text, getVertexBufferObjectManager());
+        return menuText;
+    }
+
+    public void setAppearence (Entity entity, float timeIn, final float timeOut) {
+        final Entity finalEntrity = entity;
+        finalEntrity.setAlpha(0);
+
+        FadeInModifier fadeIn = new FadeInModifier(timeIn, new IEntityModifier.IEntityModifierListener() {
+            public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
+            @Override
+            public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
+                //finalEntrity.setAlpha(1);
+                if (timeOut > 0) {
+                    FadeOutModifier fadeOut = new FadeOutModifier(timeOut, new IEntityModifier.IEntityModifierListener() {
+                        public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
+                        @Override
+                        public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
+                            finalEntrity.setAlpha(0);
+                        }
+                    });
+                    finalEntrity.registerEntityModifier(fadeOut);
+                }
+            }
+        });
+        finalEntrity.registerEntityModifier(fadeIn);
+    }
+
+    public void dissapearEntity (Entity entity, float timeOut) {
+        FadeOutModifier fadeOut = new FadeOutModifier(timeOut);
+        entity.registerEntityModifier(fadeOut);
+    }
 
 }
