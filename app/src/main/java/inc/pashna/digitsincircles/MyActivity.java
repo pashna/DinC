@@ -82,9 +82,12 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
         SharedPreferences sPref = getPreferences(MODE_PRIVATE);
-        if (sPref.getBoolean(NEW_PLAYER, true)) {
+        //if (sPref.getBoolean(NEW_PLAYER, true)) {
             mNumberOfLevel = 0;
-        }
+            SharedPreferences.Editor ed = sPref.edit();
+            ed.putBoolean(NEW_PLAYER, false);
+            ed.commit();
+        //}
     }
 
     @Override
@@ -284,9 +287,8 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
         return menuText;
     }
 
-    public void setAppearence (Entity entity, float timeIn, final float timeOut) {
-        final Entity finalEntrity = entity;
-        finalEntrity.setAlpha(0);
+    public void setAppearence (final Entity entity, final float timeIn, final float timeOut) {
+        entity.setAlpha(0);
 
         FadeInModifier fadeIn = new FadeInModifier(timeIn, new IEntityModifier.IEntityModifierListener() {
             public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
@@ -298,14 +300,15 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
                         public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {}
                         @Override
                         public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
-                            finalEntrity.setAlpha(0);
+                            entity.setAlpha(0);
+                            mainScene.detachChild(entity);
                         }
                     });
-                    finalEntrity.registerEntityModifier(fadeOut);
+                    entity.registerEntityModifier(fadeOut);
                 }
             }
         });
-        finalEntrity.registerEntityModifier(fadeIn);
+        entity.registerEntityModifier(fadeIn);
     }
 
     public void dissapearEntity (Entity entity, float timeOut) {

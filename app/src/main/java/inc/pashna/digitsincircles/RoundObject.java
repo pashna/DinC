@@ -22,7 +22,7 @@ public class RoundObject extends GameObject {
     LoopEntityModifier loopEntityModifier;
 
     private float velocityX = 0;
-    private float velocityY = 150;
+    private float velocityY = 186;
 
     /*
     Конструктор игровых объектов. Заполняет поле value заданным значением
