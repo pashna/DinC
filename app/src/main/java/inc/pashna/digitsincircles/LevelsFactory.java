@@ -45,6 +45,15 @@ public class LevelsFactory {
         worker.schedule(task, delay, TimeUnit.SECONDS);
     }
 
+    void setVelocityWithDelay(final float Vx, final float Vy, long delay) {
+        Runnable task = new Runnable() {
+            public void run() {
+                setVelovity(Vx, Vy);
+            }
+        };
+        worker.schedule(task, delay, TimeUnit.SECONDS);
+    }
+
     public LevelsFactory(TiledTextureRegion blue, TiledTextureRegion orange, Font font, VertexBufferObjectManager vertexBufferObjectManager, OnPositionChangedListener listener) {
         this.blue = blue;
         this.orange = orange;
@@ -62,6 +71,7 @@ public class LevelsFactory {
                 flagToDemoLevelFirstTap = true;
                 int type[] = {ORANGE, ORANGE, BLUE, ORANGE, ORANGE};
                 int value[] = {2, 2, 2, 2, 2};
+
                 createRoundObjectsForDemoLevel(type, value, (int) (MyActivity.CAMERA_WIDTH / 2 - blue.getWidth() / 2), (int) (-blue.getHeight() * 1.5));
                 attachToScene(type, scene);
 
@@ -70,22 +80,9 @@ public class LevelsFactory {
                 instruction.setHorizontalAlign(HorizontalAlign.CENTER);
                 instruction.setAlpha(0);
 
-                //myActivity.setAppearence(instruction, 1f, 0);
                 myActivity.mainScene.attachChild(instruction);
                 appearEntrityWithDelay(instruction, 3);
 
-                /*myActivity.mainScene.register(new TimerHandler(3.65f, true, new ITimerCallback() {
-                    @Override
-                    public void onTimePassed(final TimerHandler pTimerHandler) {
-                        stopAllRound();
-/*                        instruction = myActivity.createText("Tap on blue round \n to increase the number");
-                        instruction.setPosition(MyActivity.CAMERA_WIDTH/2-instruction.getWidth()/2, MyActivity.CAMERA_HEIGHT-instruction.getHeight()*2);
-                        instruction.setHorizontalAlign(HorizontalAlign.CENTER);
-                        myActivity.setAppearence(instruction, 1, 0);
-                        myActivity.mainScene.attachChild(instruction);
-                    }
-                }));
-                */
                 break;
             }
 
@@ -149,35 +146,14 @@ public class LevelsFactory {
                     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                         if (flagToDemoLevelFirstTap) {
                             flagToDemoLevelFirstTap = false;
-                            //myActivity.setAppearence(instruction, 0, 1);
-                            //myActivity.mainScene.detachChild(instruction);
 
-                            //Text enjoyText =
-
+//                            instruction.setAlpha(0);
                             instruction.setText("Solve the sequence\nand enjoy!");
                             instruction.setPosition(MyActivity.CAMERA_WIDTH/2-instruction.getWidth()/2, MyActivity.CAMERA_HEIGHT-instruction.getHeight()*2);
                             instruction.setHorizontalAlign(HorizontalAlign.CENTER);
-                            myActivity.setAppearence(instruction, 0f, 1f);
-                            levelsFactory.setVelovity(0, 200);
+                            myActivity.setAppearence(instruction, 1f, 1f);
 
-                        /*myActivity.mainScene.registerUpdateHandler(new TimerHandler(1f, true, new ITimerCallback() {
-                            @Override
-                            public void onTimePassed(final TimerHandler pTimerHandler) {
-                                instruction.setText("Solve the sequence\nand enjoy!");
-                                instruction.setPosition(MyActivity.CAMERA_WIDTH/2-instruction.getWidth()/2, MyActivity.CAMERA_HEIGHT-instruction.getHeight()*2);
-                                instruction.setHorizontalAlign(HorizontalAlign.CENTER);
-                                myActivity.setAppearence(instruction, 1, 1);
-                            }
-                        }));
-                        */
-                        /*
-                        myActivity.mainScene.registerUpdateHandler(new TimerHandler(2.5f, true, new ITimerCallback() {
-                            @Override
-                            public void onTimePassed(final TimerHandler pTimerHandler) {
-                                setVelovity(0, roundObjects[0].getVelocityY());
-                            }
-                        }));
-                        */
+                            setVelocityWithDelay(0, 200, 1);
                         }
 
                         return super.onAreaTouched(pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY);

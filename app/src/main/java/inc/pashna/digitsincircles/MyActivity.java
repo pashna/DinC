@@ -301,7 +301,6 @@ public class MyActivity extends SimpleBaseGameActivity implements OnPositionChan
                         @Override
                         public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
                             entity.setAlpha(0);
-                            mainScene.detachChild(entity);
                         }
                     });
                     entity.registerEntityModifier(fadeOut);
